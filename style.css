@@ -1,0 +1,19 @@
+body{
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+}
+
+@keyframes flyAcrossScreen {
+    from {
+        left: 100vw;
+    }
+    to {
+        left: var(--start-left);
+    }
+  }
+  
+  /* Classe à appliquer pour déclencher l'animation */
+  .fly-across {
+    animation: flyAcrossScreen 1.5s linear forwards;
+  }
