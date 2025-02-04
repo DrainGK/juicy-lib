@@ -1,23 +1,64 @@
 (function(window) {
     const config = {
       effects: {
-
-        bounce: {
-          animation: "animate__bounce",
-          sound: "assets/correct-answer.mp3"
-        },
-        shake: {
-          animation: "animate__shakeX",
-          sound: "assets/wrong-answer.mp3"
-        },
-        dragonBall:{
-            gif: "assets/kid-goku.gif",
-            sound:"assets/jazz-loop.mp3"
-        }
       }
     };
+
+    class SoundManager {
+        constructor(){
+            this.setVolume(0.1);
+            this.currentHowl = null;
+        }
+
+        setVolume(volume){
+            if(volume >= 0 && volume <= 1){
+                Howler.volume(volume);
+            } else {
+                console.error("Volume should be defined betweem 0 and 1")
+            }
+        }
+
+        async playSound(howlInstance) {
+            if (this.currentHowl && this.currentHowl.playing()) {
+              this.currentHowl.stop();
+            }
+        
+            // Met à jour la référence
+            this.currentHowl = howlInstance;
+        
+            //gestion du chargement
+            const state = howlInstance.state();
+            if (state === "loaded") {
+              howlInstance.play();
+            } else if (state === "loading") {
+              await new Promise(resolve => {
+                howlInstance.once("load", resolve);
+              });
+              howlInstance.play();
+            } else {
+              howlInstance.load();
+              await new Promise(resolve => {
+                howlInstance.once("load", resolve);
+              });
+              howlInstance.play();
+            }
+          }
+    }
+
+    const preloadSounds = function(){
+        Object.keys(config.effects).forEach(effectName => {
+            const effect = config.effects[effectName];
+            if(effect.sound){
+                effect.howl = new Howl({
+                    src: [effect.sound],
+                    preload: true
+                })
+            }
+        })
+    }
   
     const JuicyLib = {
+        soundManager: new SoundManager(),
       /**
        * @param {HTMLElement} element -L'élément sur lequel appliquer l'animation.
        * @param {string} effectName - Le nom de l'effet à déclencher.
@@ -30,15 +71,13 @@
         }
   
         // Déclencher le son (si défini)
-        if (effect.sound) {
-          const audio = new Audio(effect.sound);
-          audio.play().catch(e => console.error("Erreur lors de la lecture du son :", e));
-        }
+        if (effect.howl) {
+            JuicyLib.soundManager.playSound(effect.howl);
+          }
 
-        if (effect.gif) {
+        if (effect.pic) {
           }
   
-        // Déclencher l'animation (si définie)
         if (effect.animation) {
           if (!element || !element.classList) {
             console.error("L'élément fourni n'est pas valide :", element);
@@ -65,6 +104,12 @@
 
       addEffect: function(name, effect){
         config.effects[name] = effect;
+        if(effect.sound){
+            effect.howl = new Howl({
+                src: [effect.sound],
+                preload: true
+            })
+        }
       },
 
       removeEffect: function(name){
@@ -82,10 +127,11 @@
       },
   
       init: function() {
+        preloadSounds();
         // Parcourt tous les éléments ayant l'attribut data-juicy-effect
-        document.querySelectorAll("[data-juicy-effect]").forEach(function(elem) {
+        document.querySelectorAll("[data-juicy-click]").forEach(function(elem) {
           elem.addEventListener("click", function() {
-            const effectName = elem.getAttribute("data-juicy-effect");
+            const effectName = elem.getAttribute("data-juicy-click");
             JuicyLib.trigger(elem, effectName);
           });
         });

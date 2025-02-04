@@ -1,11 +1,11 @@
 const newEffects = {
     tada: {
       animation: "animate__tada",
-      sound: "assets/selection-menu.mp3"
+      sound: "assets/jazz-loop.mp3"
     },
     swing: {
       animation: "animate__swing",
-      sound: "assets/jazz-loop.mp3"
+      sound: "assets/correct-answer.mp3"
     }
 };
 
