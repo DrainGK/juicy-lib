@@ -56,6 +56,40 @@
     });
   };
 
+  const attachEvents = function () {
+    Object.keys(config.effects).forEach((effectName) => {
+      const effect = config.effects[effectName];
+      const elements = document.querySelectorAll(effect.target);
+
+      switch(effect.trigger){
+        case 'click':
+          elements.forEach((elem) => {
+            elem.addEventListener("click", ()=>{
+              JuicyLib.trigger(elem, effectName);
+            });
+          });
+          break;
+        case "hover":
+          elements.forEach((elem) => {
+            // On utilise mouseenter pour le "hover"
+            elem.addEventListener("mouseenter", () => {
+              JuicyLib.trigger(elem, effectName);
+            });
+          });
+          break;
+          case "load":
+          // Pour "load", on peut déclencher directement à la fin du chargement
+          window.addEventListener("load", () => {
+            // Si on veut affecter chaque élément, on boucle
+            elements.forEach((elem) => {
+              JuicyLib.trigger(elem, effectName);
+            });
+          });
+          break; 
+      }
+    })
+  }
+
   const JuicyLib = {
     soundManager: new SoundManager(),
     /**
@@ -69,35 +103,34 @@
         return;
       }
 
-      // Déclencher le son (si défini)
-      if (effect.howl) {
-        JuicyLib.soundManager.playSound(effect.howl);
+      if (effect.type === "sound" || effect.type === "both") {
+        if (effect.howl) {
+          JuicyLib.soundManager.playSound(effect.howl);
+        }
       }
 
-      if (effect.pic) {
-      }
-
-      if (effect.animation) {
+      if ((effect.type === "animation" || effect.type === "both") && effect.animation) {
+        // Vérification de l'élément
         if (!element || !element.classList) {
           console.error("L'élément fourni n'est pas valide :", element);
           return;
         }
-
-        // Retirer les classes si elles existent déjà
+        // Retire la classe si elle existe déjà
         element.classList.remove("animate__animated", effect.animation);
-
-        // Forcer un reflow pour que l'ajout des classes déclenche l'animation
+        // Force un reflow
         void element.offsetWidth;
-
-        // Ajouter les classes nécessaires à Animate.css
+        // Ajoute la classe
         element.classList.add("animate__animated", effect.animation);
-
-        // Écouter la fin de l'animation pour retirer les classes et permettre une réactivation ultérieure
+        // Retire la classe à la fin de l'animation
         const handleAnimationEnd = () => {
           element.classList.remove("animate__animated", effect.animation);
           element.removeEventListener("animationend", handleAnimationEnd);
         };
         element.addEventListener("animationend", handleAnimationEnd);
+      }
+
+      if (effect.element){
+
       }
     },
 
@@ -126,43 +159,10 @@
     },
 
     init: function () {
+      // Précharge les sons
       preloadSounds();
-      // Parcourt tous les éléments ayant l'attribut data-juicy-effect
-      document.querySelectorAll("[data-juicy-click]").forEach(function (elem) {
-        elem.addEventListener("click", function () {
-          const effectName = elem.getAttribute("data-juicy-click");
-          JuicyLib.trigger(elem, effectName);
-        });
-      });
-
-      document.querySelectorAll("[data-juicy-hover]").forEach(function (elem) {
-        // On définit la fonction de gestion du survol
-        function handleMouseEnter() {
-          // Retirer l'écouteur pour éviter de relancer l'animation pendant qu'elle est en cours
-          elem.removeEventListener("mouseenter", handleMouseEnter);
-
-          const effectName = elem.getAttribute("data-juicy-hover");
-          JuicyLib.trigger(elem, effectName);
-
-          // Si l'effet possède une animation définie, on attend la fin de l'animation avant de réactiver l'écouteur
-          const effect = JuicyLib.getEffects()[effectName];
-          if (effect && effect.animation) {
-            const onAnimationEnd = () => {
-              // Réactiver l'écouteur après l'animation
-              elem.addEventListener("mouseenter", handleMouseEnter);
-              // Retirer cet écouteur pour éviter plusieurs déclenchements
-              elem.removeEventListener("animationend", onAnimationEnd);
-            };
-            elem.addEventListener("animationend", onAnimationEnd);
-          } else {
-            // S'il n'y a pas d'animation, on réactive immédiatement l'écouteur
-            elem.addEventListener("mouseenter", handleMouseEnter);
-          }
-        }
-
-        // Ajout initial de l'écouteur
-        elem.addEventListener("mouseenter", handleMouseEnter);
-      });
+      // Attache les events sur tous les targets
+      attachEvents();
     },
   };
 
