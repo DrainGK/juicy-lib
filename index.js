@@ -6,7 +6,11 @@ const newEffects = {
     swing: {
       animation: "animate__swing",
       sound: "assets/correct-answer.mp3"
-    }
+    },
+    shake: {
+      animation: "animate__shakeY",
+      sound: "assets/correct-answer.mp3"
+    },
 };
 
 
